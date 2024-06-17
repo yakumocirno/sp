@@ -1,92 +1,113 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-double *AllArr(int R,int C){
-    return(double*)malloc( R*C*sizeof(double));
-}
+typedef struct {
+    int rows;
+    int cols;
+    double **data;
+} Matrix;
 
-void createArr(double *Arr, int R, int C) {
-    for (int i=0;i<R;i++) {
-        double in[C];
-        for (int j=0;j<C;j++) {
-            scanf("%lf",&in[j]);
-            Arr[i*C+j]=in[j];
-        }
+Matrix* create_matrix(int rows, int cols) {
+    Matrix *matrix = (Matrix*)malloc(sizeof(Matrix));
+    matrix->rows = rows;
+    matrix->cols = cols;
+    matrix->data = (double**)malloc(rows * sizeof(double*));
+    for (int i = 0; i < rows; i++) {
+        matrix->data[i] = (double*)malloc(cols * sizeof(double));
     }
+    return matrix;
 }
 
-void dump(double *Arr,int R,int C) {
-    for (int i=0;i<R;i++) {
-        for (int j=0;j<C;j++) {
-            printf("%0.lf",Arr[i*C+j]);
+void free_matrix(Matrix *matrix) {
+    for (int i = 0; i < matrix->rows; i++) {
+        free(matrix->data[i]);
+    }
+    free(matrix->data);
+    free(matrix);
+}
+
+void print_matrix(Matrix *matrix) {
+    for (int i = 0; i < matrix->rows; i++) {
+        for (int j = 0; j < matrix->cols; j++) {
+            printf("%lf ", matrix->data[i][j]);
         }
         printf("\n");
     }
 }
-void Transpose(double *Arr,int R,int C){
-    double *temp=AllArr(R,C);
-    for(int i=0;i<R;i++){
-        for(int j=0;j<C;j++){
-            temp[j*R+i]=Arr[i*C+j];
+
+Matrix* add_matrices(Matrix *a, Matrix *b) {
+    if (a->rows != b->rows || a->cols != b->cols) {
+        printf("矩陣尺寸不匹配\n");
+        return NULL;
+    }
+    Matrix *result = create_matrix(a->rows, a->cols);
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->cols; j++) {
+            result->data[i][j] = a->data[i][j] + b->data[i][j];
         }
     }
-    dump(temp,R,C);
+    return result;
 }
-void Add(double *Arra, double *Arrb,int Ra,int Ca,int Rb,int Cb){
-    if (Ra==Rb && Ca==Cb)
-    {
-        double *temp=AllArr(Ra,Cb);
-        for (int i=0;i<Ra;i++)
-        {
-            for (int j=0;j<Ca;j++)
-            {
-                temp[i*Ca+j]=Arra[i*Ca+j]+Arrb[i*Ca+j]:
+
+Matrix* multiply_matrices(Matrix *a, Matrix *b) {
+    if (a->cols != b->rows) {
+        printf("矩陣尺寸不匹配\n");
+        return NULL;
+    }
+    Matrix *result = create_matrix(a->rows, b->cols);
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < b->cols; j++) {
+            result->data[i][j] = 0;
+            for (int k = 0; k < a->cols; k++) {
+                result->data[i][j] += a->data[i][k] * b->data[k][j];
             }
         }
-        dump(temp,Ra,Ca);
     }
-    else printf("error\n");
+    return result;
+}
+
+Matrix* transpose_matrix(Matrix *matrix) {
+    Matrix *result = create_matrix(matrix->cols, matrix->rows);
+    for (int i = 0; i < matrix->rows; i++) {
+        for (int j = 0; j < matrix->cols; j++) {
+            result->data[j][i] = matrix->data[i][j];
+        }
+    }
+    return result;
+}
+
+int main() {
+
+    Matrix *a = create_matrix(2, 2);
+    a->data[0][0] = 1; a->data[0][1] = 2;
+    a->data[1][0] = 3; a->data[1][1] = 4;
+
+    Matrix *b = create_matrix(2, 2);
+    b->data[0][0] = 5; b->data[0][1] = 6;
+    b->data[1][0] = 7; b->data[1][1] = 8;
+
+    Matrix *sum = add_matrices(a, b);
+    Matrix *product = multiply_matrices(a, b);
+    Matrix *transpose = transpose_matrix(a);
+
+    printf("Matrix A:\n");
+    print_matrix(a);
+    printf("Matrix B:\n");
+    print_matrix(b);
+    printf("Sum of A and B:\n");
+    print_matrix(sum);
+    printf("Product of A and B:\n");
+    print_matrix(product);
+    printf("Transpose of A:\n");
+    print_matrix(transpose);
+
+    free_matrix(a);
+    free_matrix(b);
+    free_matrix(sum);
+    free_matrix(product);
+    free_matrix(transpose);
+
+    return 0;
     
 }
-void Multiply(double *Arra,double *Arrb,int Ra,int Ca,int Rb,int Cb ){
-    if (Ca == Rb) {
-        double *temp=AllArr(Ra,Cb);
-        for (int i= 0;i<Ra;i++) {
-            for (int j=0;j<Cb;j++){
-                double sum=0;
-                for (int k=0;k<Ca;k++) {
-                    sum += Arra[i*Ca+k] * Arrb[k*Cb +j];
-                }
-                temp[i*Cb+j]=sum;
-            }
-        }
-        printf("Arra * Arrb:\n");
-        dump(temp,Ra,Cb);
-    }
-    else printf("error\n");
-}
 
-int main(){
-    int Ra,Rb,Ca,Cb;
-    printf("input Ra Ca Rb Cb\n");
-    scanf("%d%d%d%d",&Ra,&Ca,&Rb,&Cb);
-    double *Arra=AllArr(Ra,Ca);
-    double *Arrb=AllArr(Rb,Cb);
-    printf("createArr Arra:\n");
-    createArr(Arra,Ra,Ca);
-    printf("createArr Arrb:\n");
-    createArr(Arrb,Rb,Cb);
-    printf("Transposed Arra:\n");
-    Transpose(Arra,Ra,Ca);
-    printf("Transposed Arrb:\n");
-    Transpose(Arrb,Rb,Cb);
-    printf("Arra + Arrb:\n");
-    Add(Arra,Arrb,Ra,Ca,Rb,Cb);
-    printf("Arra * Arrb:");
-    Multiply(Arra,Arrb,Ra,Ca,Rb,Cb);
-
-
-
-
-
-}
